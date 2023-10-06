@@ -1,1089 +1,511 @@
-import mysql.connector
-from mysql.connector import Error
-import prettytable
+import tkinter.messagebox
+from tkinter import  *
+import mysql.connector as sqlcon
+import random as rd
 
+con=sqlcon.connect(host="localhost",user="root",password="admin")#connection to mysql 
+cur=con.cursor()
+cur = con.cursor(buffered=True)
+if (con):
+    # Carry out normal procedure
+    print ("Connection successful")
+else:
+    print ("Connection unsuccessful")
+cur.execute("create database if not exists Hospital")
+cur.execute("use Hospital")
+cur.execute("create table if not exists appointment"
+            "("
+            "idno varchar(12) primary key,"
+            "name char(50),"
+            "age char(3),"
+            "gender char(1),"
+            "phone varchar(10),"
+            "bg varchar(3))")
+cur.execute("create table if not exists appointment_details"
+            "("
+            "idno varchar(12) primary key,"
+            "doctor varchar(50),"
+            "date varchar(20),"
+            "time varchar(20),"
+            "appointment_no varchar(10))")
 
-def connect_to_database():
-    try:
-        connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="1234",
-            database="HospitalDB"
-        )
-        return connection
-    except Error as e:
-        print("Error connecting to the database:", e)
-        return None
+#  Message for registration
+def entry():
+    global e1,e2,e3,e4,e5,e6
+    p1=e1.get()
+    p2=e2.get()
+    p3=e3.get()
+    p4=e4.get()
+    p5=e5.get()
+    p6=e6.get()
 
-
-def create_tables(connection):
-    cursor = connection.cursor()
+    query='insert into appointment values("{}", "{}", "{}", "{}", "{}", "{}")'.format(p1,p2,p3,p4,p5,p6)
+    con.commit()
+    cur.execute(query)
     
-    tables = [
-    """
-    CREATE TABLE IF NOT EXISTS Patients (
-        PatientID INT AUTO_INCREMENT PRIMARY KEY,
-        FirstName VARCHAR(50),
-        LastName VARCHAR(50),
-        DateOfBirth DATE,
-        Gender ENUM('Male', 'Female', 'Other'),
-        Allergies TEXT,
-        MedicalHistory TEXT,
-        RoomNumber INT
-    )
-    """,
-    """
-    CREATE TABLE IF NOT EXISTS Admissions (
-        AdmissionID INT AUTO_INCREMENT PRIMARY KEY,
-        PatientID INT,
-        AdmissionDate DATE,
-        DischargeDate DATE,
-        AdmittingPhysician VARCHAR(100),
-        ReasonForAdmission TEXT,
-        FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-    )
-    """,
-    """
-    CREATE TABLE IF NOT EXISTS MedicalStaff (
-        StaffID INT AUTO_INCREMENT PRIMARY KEY,
-        FirstName VARCHAR(50),
-        LastName VARCHAR(50),
-        Role VARCHAR(100),
-        LicensingInfo VARCHAR(100),
-        WorkSchedule TEXT
-    )
-    """,
-    """
-    CREATE TABLE IF NOT EXISTS Policies (
-        PolicyID INT AUTO_INCREMENT PRIMARY KEY,
-        PolicyName VARCHAR(100),
-        PolicyText TEXT
-    )
-    """,
-    """
-    CREATE TABLE IF NOT EXISTS Billing (
-        BillingID INT AUTO_INCREMENT PRIMARY KEY,
-        PatientID INT,
-        InsuranceProvider VARCHAR(100),
-        BillingAmount DECIMAL(10, 2),
-        PaymentStatus ENUM('Paid', 'Unpaid'),
-        FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-    )
-    """,
-    """
-CREATE TABLE IF NOT EXISTS MedicalImages (
-    ImageID INT AUTO_INCREMENT PRIMARY KEY,
-    PatientID INT,
-    ImageType VARCHAR(50),
-    ImageData LONGBLOB,
-    Report TEXT,
-    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-)
-""",
-"""
-CREATE TABLE IF NOT EXISTS LabResults (
-    ResultID INT AUTO_INCREMENT PRIMARY KEY,
-    PatientID INT,
-    TestType VARCHAR(50),
-    ResultValue VARCHAR(100),
-    TestDate DATE,
-    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-)
-""",
-"""
-CREATE TABLE IF NOT EXISTS Medications (
-    MedicationID INT AUTO_INCREMENT PRIMARY KEY,
-    PatientID INT,
-    MedicationName VARCHAR(100),
-    Dosage VARCHAR(50),
-    PrescriptionDate DATE,
-    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-)
-""",
-"""
-CREATE TABLE IF NOT EXISTS Appointments (
-    AppointmentID INT AUTO_INCREMENT PRIMARY KEY,
-    PatientID INT,
-    AppointmentDate DATETIME,
-    PhysicianName VARCHAR(100),
-    Status ENUM('Scheduled', 'Canceled', 'Attended'),
-    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
-)
-""",
-"""
-CREATE TABLE IF NOT EXISTS Inventory (
-    ItemID INT AUTO_INCREMENT PRIMARY KEY,
-    ItemName VARCHAR(100),
-    Quantity INT,
-    UnitPrice DECIMAL(10, 2),
-    Description TEXT
-)
-""",
-"""
-CREATE TABLE IF NOT EXISTS Suppliers (
-    SupplierID INT AUTO_INCREMENT PRIMARY KEY,
-    SupplierName VARCHAR(100),
-    ContactName VARCHAR(100),
-    Phone VARCHAR(20),
-    Email VARCHAR(100)
-)
-"""
-]
-
-
-    for table in tables:
-        cursor.execute(table)
+        
     
-    cursor.close()
-
-
-def check_and_create_database_tables():
-    try:
-        connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="1234",
-        )
-
-        cursor = connection.cursor()
-        cursor.execute("CREATE DATABASE IF NOT EXISTS HospitalDB")
-        cursor.close()
-
-        connection.database = "HospitalDB"
-        create_tables(connection)
-        return connection
-    except Error as e:
-        print("Error connecting to the database:", e)
-        return None
-
-
-
-def display_patient_info(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Patients")
-    patients = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Patient ID", "First Name", "Last Name", "Date of Birth", "Gender", "Allergies", "Medical History", "Room Number"]
-
-    for patient in patients:
-        table.add_row([patient[0], patient[1], patient[2], patient[3], patient[4], patient[5], patient[6], patient[7]])
-
-    print("Patient Information")
-    print(table)
-
-
-
-    for patient in patients:
-        print(f"Patient ID: {patient[0]}")
-        print(f"Name: {patient[1]} {patient[2]}")
-        print(f"Date of Birth: {patient[3]}")
-        print(f"Gender: {patient[4]}")
-        print(f"Allergies: {patient[5]}")
-        print(f"Medical History: {patient[6]}\n")
-
-
-def display_admissions(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Admissions")
-    admissions = cursor.fetchall()
-    cursor.close()
-
-    table = prettytable.PrettyTable(["Admission ID", "Patient ID", "Admission Date", "Discharge Date", "Admitting Physician", "Reason for Admission"])
-    for admission in admissions:
-        table.add_row(admission)
-
-    print(table)
-
-    for admission in admissions:
-        print(f"Admission ID: {admission[0]}")
-        print(f"Patient ID: {admission[1]}")
-        print(f"Admission Date: {admission[2]}")
-        print(f"Discharge Date: {admission[3]}")
-        print(f"Admitting Physician: {admission[4]}")
-        print(f"Reason for Admission: {admission[5]}\n")
-
-
-from prettytable import PrettyTable
-
-def view_medical_staff_info(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM MedicalStaff")
-    staff = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Staff ID", "First Name", "Last Name", "Role", "Licensing Info", "Work Schedule"]
-
-    for staff_member in staff:
-        table.add_row([staff_member[0], staff_member[1], staff_member[2], staff_member[3], staff_member[4], staff_member[5]])
-
-    print("Medical Staff Information")
-    print(table)
-
-
-
-def view_policies(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Policies")
-    policies = cursor.fetchall()
-    cursor.close()
-
-    table = prettytable.PrettyTable(["Policy ID", "Policy Name", "Policy Text"])
-    for policy in policies:
-        table.add_row(policy)
-
-    print(table)
-
-
-def edit_policy(connection, policy_id, policy_name, policy_text):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Policies
-        SET PolicyName = %s, PolicyText = %s
-        WHERE PolicyID = %s
-    """
-    values = (policy_name, policy_text, policy_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_policy(connection, policy_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Policies WHERE PolicyID = %s"
-    cursor.execute(sql, (policy_id,))
-    connection.commit()
-    cursor.close()
-
-
-def assign_room(connection, patient_id, room_number):
-    cursor = connection.cursor()
-    sql = "UPDATE Patients SET RoomNumber = %s WHERE PatientID = %s"
-    values = (room_number, patient_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def view_room_assignments(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT PatientID, FirstName, LastName, RoomNumber FROM Patients WHERE RoomNumber IS NOT NULL")
-    room_assignments = cursor.fetchall()
-    cursor.close()
-
-    table = prettytable.PrettyTable(["Patient ID", "First Name", "Last Name", "Room Number"])
-    for assignment in room_assignments:
-        table.add_row(assignment)
-
-    print(table)
-
-    for assignment in room_assignments:
-        print(f"Patient ID: {assignment[0]}")
-        print(f"Name: {assignment[1]} {assignment[2]}")
-        print(f"Room Number: {assignment[3]}\n")
-
-
-def edit_admission(connection, admission_id, patient_id, admission_date, discharge_date, admitting_physician, reason_for_admission):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Admissions
-        SET PatientID = %s, AdmissionDate = %s, DischargeDate = %s, AdmittingPhysician = %s, ReasonForAdmission = %s
-        WHERE AdmissionID = %s
-    """
-    values = (patient_id, admission_date, discharge_date, admitting_physician, reason_for_admission, admission_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def add_billing(connection, patient_id, insurance_provider, billing_amount, payment_status):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Billing (PatientID, InsuranceProvider, BillingAmount, PaymentStatus)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (patient_id, insurance_provider, billing_amount, payment_status)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_billing(connection, billing_id, insurance_provider, billing_amount, payment_status):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Billing
-        SET InsuranceProvider = %s, BillingAmount = %s, PaymentStatus = %s
-        WHERE BillingID = %s
-    """
-    values = (insurance_provider, billing_amount, payment_status, billing_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_billing(connection, billing_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Billing WHERE BillingID = %s"
-    cursor.execute(sql, (billing_id,))
-    connection.commit()
-    cursor.close()
-
-
-def add_medical_image(connection, patient_id, image_type, image_data, report):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO MedicalImages (PatientID, ImageType, ImageData, Report)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (patient_id, image_type, image_data, report)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_medical_image(connection, image_id, image_type, report):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE MedicalImages
-        SET ImageType = %s, Report = %s
-        WHERE ImageID = %s
-    """
-    values = (image_type, report, image_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_medical_image(connection, image_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM MedicalImages WHERE ImageID = %s"
-    cursor.execute(sql, (image_id,))
-    connection.commit()
-    cursor.close()
-
-
-def add_lab_result(connection, patient_id, test_type, result_value, test_date):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO LabResults (PatientID, TestType, ResultValue, TestDate)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (patient_id, test_type, result_value, test_date)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_lab_result(connection, result_id, test_type, result_value):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE LabResults
-        SET TestType = %s, ResultValue = %s
-        WHERE ResultID = %s
-    """
-    values = (test_type, result_value, result_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_lab_result(connection, result_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM LabResults WHERE ResultID = %s"
-    cursor.execute(sql, (result_id,))
-    connection.commit()
-    cursor.close()
-
-
-def add_medication(connection, patient_id, medication_name, dosage, prescription_date):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Medications (PatientID, MedicationName, Dosage, PrescriptionDate)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (patient_id, medication_name, dosage, prescription_date)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_medication(connection, medication_id, medication_name, dosage):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Medications
-        SET MedicationName = %s, Dosage = %s
-        WHERE MedicationID = %s
-    """
-    values = (medication_name, dosage, medication_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-
-def remove_medication(connection, medication_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Medications WHERE MedicationID = %s"
-    cursor.execute(sql, (medication_id,))
-    connection.commit()
-    cursor.close()
-
-
-def schedule_appointment(connection, patient_id, staff_id, appointment_date, appointment_time, appointment_type):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Appointments (PatientID, StaffID, AppointmentDate, AppointmentTime, AppointmentType)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    values = (patient_id, staff_id, appointment_date, appointment_time, appointment_type)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_appointment(connection, appointment_id, appointment_date, appointment_time, appointment_type):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Appointments
-        SET AppointmentDate = %s, AppointmentTime = %s, AppointmentType = %s
-        WHERE AppointmentID = %s
-    """
-    values = (appointment_date, appointment_time, appointment_type, appointment_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def cancel_appointment(connection, appointment_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Appointments WHERE AppointmentID = %s"
-    cursor.execute(sql, (appointment_id,))
-    connection.commit()
-    cursor.close()
-
-
-def assign_staff_role(connection, staff_id, role):
-    cursor = connection.cursor()
-    sql = "UPDATE MedicalStaff SET Role = %s WHERE StaffID = %s"
-    values = (role, staff_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_staff_information(connection, staff_id, first_name, last_name, role, licensing_info, work_schedule):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE MedicalStaff
-        SET FirstName = %s, LastName = %s, Role = %s, LicensingInfo = %s, WorkSchedule = %s
-        WHERE StaffID = %s
-    """
-    values = (first_name, last_name, role, licensing_info, work_schedule, staff_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_staff_member(connection, staff_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM MedicalStaff WHERE StaffID = %s"
-    cursor.execute(sql, (staff_id,))
-    connection.commit()
-    cursor.close()
-
-
-def create_hospital_policy(connection, policy_name, policy_text):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Policies (PolicyName, PolicyText)
-        VALUES (%s, %s)
-    """
-    values = (policy_name, policy_text)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_policy_procedure(connection, policy_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Policies WHERE PolicyID = %s"
-    cursor.execute(sql, (policy_id,))
-    connection.commit()
-    cursor.close()
-
-
-def assign_room(connection, patient_id, room_number):
-    cursor = connection.cursor()
-    sql = "UPDATE Patients SET RoomNumber = %s WHERE PatientID = %s"
-    values = (room_number, patient_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def discharge_patient(connection, patient_id, discharge_date):
-    cursor = connection.cursor()
-    sql = "UPDATE Patients SET DischargeDate = %s WHERE PatientID = %s"
-    values = (discharge_date, patient_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-from prettytable import PrettyTable
-
-def view_inventory(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Inventory")
-    inventory_items = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Item ID", "Item Name", "Item Description", "Item Quantity", "Item Price"]
-
-    for item in inventory_items:
-        table.add_row([item[0], item[1], item[2], item[3], item[4]])
-
-    print("Inventory Items")
-    print(table)
-
-
-    for item in inventory_items:
-        print(f"Item ID: {item[0]}")
-        print(f"Item Name: {item[1]}")
-        print(f"Item Description: {item[2]}")
-        print(f"Item Quantity: {item[3]}")
-        print(f"Item Price: {item[4]}\n")
-
-
-def add_inventory_item(connection, item_name, item_description, item_quantity, item_price):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Inventory (ItemName, ItemDescription, ItemQuantity, ItemPrice)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (item_name, item_description, item_quantity, item_price)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_inventory_item(connection, item_id, item_name, item_description, item_quantity, item_price):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Inventory
-        SET ItemName = %s, ItemDescription = %s, ItemQuantity = %s, ItemPrice = %s
-        WHERE ItemID = %s
-    """
-    values = (item_name, item_description, item_quantity, item_price, item_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_inventory_item(connection, item_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Inventory WHERE ItemID = %s"
-    cursor.execute(sql, (item_id,))
-    connection.commit()
-    cursor.close()
-
-
-from prettytable import PrettyTable
-
-def view_supplier_info(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Suppliers")
-    suppliers = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Supplier ID", "Supplier Name", "Supplier Contact", "Supplier Address"]
-
-    for supplier in suppliers:
-        table.add_row([supplier[0], supplier[1], supplier[2], supplier[3]])
-
-    print("Supplier Information")
-    print(table)
-
-
-    for supplier in suppliers:
-        print(f"Supplier ID: {supplier[0]}")
-        print(f"Supplier Name: {supplier[1]}")
-        print(f"Supplier Contact: {supplier[2]}")
-        print(f"Supplier Address: {supplier[3]}\n")
-
-
-def add_supplier(connection, supplier_name, supplier_contact, supplier_address):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO Suppliers (SupplierName, SupplierContact, SupplierAddress)
-        VALUES (%s, %s, %s)
-    """
-    values = (supplier_name, supplier_contact, supplier_address)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_supplier_info(connection, supplier_id, supplier_name, supplier_contact, supplier_address):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE Suppliers
-        SET SupplierName = %s, SupplierContact = %s, SupplierAddress = %s
-        WHERE SupplierID = %s
-    """
-    values = (supplier_name, supplier_contact, supplier_address, supplier_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_supplier(connection, supplier_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM Suppliers WHERE SupplierID = %s"
-    cursor.execute(sql, (supplier_id,))
-    connection.commit()
-    cursor.close()
-
-
-def patient_check_in(connection, patient_id, check_in_date):
-    cursor = connection.cursor()
-    sql = "UPDATE Patients SET CheckInDate = %s WHERE PatientID = %s"
-    values = (check_in_date, patient_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-from prettytable import PrettyTable
-
-def view_quality_assessment(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM QualityAssessments")
-    assessments = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Assessment ID", "Assessment Date", "Assessment Type", "Assessment Description", "Assessment Result"]
-
-    for assessment in assessments:
-        table.add_row([assessment[0], assessment[1], assessment[2], assessment[3], assessment[4]])
-
-    print("Quality Assessment Information")
-    print(table)
-
-
-    for assessment in assessments:
-        print(f"Assessment ID: {assessment[0]}")
-        print(f"Assessment Date: {assessment[1]}")
-        print(f"Assessment Type: {assessment[2]}")
-        print(f"Assessment Description: {assessment[3]}")
-        print(f"Assessment Result: {assessment[4]}\n")
-
-
-def add_quality_assessment(connection, assessment_date, assessment_type, assessment_description, assessment_result):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO QualityAssessments (AssessmentDate, AssessmentType, AssessmentDescription, AssessmentResult)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (assessment_date, assessment_type, assessment_description, assessment_result)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_quality_assessment(connection, assessment_id, assessment_date, assessment_type, assessment_description, assessment_result):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE QualityAssessments
-        SET AssessmentDate = %s, AssessmentType = %s, AssessmentDescription = %s, AssessmentResult = %s
-        WHERE AssessmentID = %s
-    """
-    values = (assessment_date, assessment_type, assessment_description, assessment_result, assessment_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_quality_assessment(connection, assessment_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM QualityAssessments WHERE AssessmentID = %s"
-    cursor.execute(sql, (assessment_id,))
-    connection.commit()
-    cursor.close()
-
-
-def view_research_projects(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM ResearchProjects")
-    projects = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Project ID", "Project Name", "Project Description", "Project Start Date", "Project End Date"]
-
-    for project in projects:
-        table.add_row([project[0], project[1], project[2], project[3], project[4]])
-
-    print("Research Projects Information")
-    print(table)
-
-
-def add_research_project(connection, project_name, project_description, project_start_date, project_end_date):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO ResearchProjects (ProjectName, ProjectDescription, ProjectStartDate, ProjectEndDate)
-        VALUES (%s, %s, %s, %s)
-    """
-    values = (project_name, project_description, project_start_date, project_end_date)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_research_project(connection, project_id, project_name, project_description, project_start_date, project_end_date):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE ResearchProjects
-        SET ProjectName = %s, ProjectDescription = %s, ProjectStartDate = %s, ProjectEndDate = %s
-        WHERE ProjectID = %s
-    """
-    values = (project_name, project_description, project_start_date, project_end_date, project_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_research_project(connection, project_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM ResearchProjects WHERE ProjectID = %s"
-    cursor.execute(sql, (project_id,))
-    connection.commit()
-    cursor.close()
-
-
-def view_financial_records(connection):
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM FinancialRecords")
-    records = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Record ID", "Record Type", "Record Date", "Record Amount"]
-
-    for record in records:
-        table.add_row([record[0], record[1], record[2], record[3]])
-
-    print("Financial Records")
-    print(table)
-
-
-def add_financial_record(connection, record_type, record_date, record_amount):
-    cursor = connection.cursor()
-    sql = """
-        INSERT INTO FinancialRecords (RecordType, RecordDate, RecordAmount)
-        VALUES (%s, %s, %s)
-    """
-    values = (record_type, record_date, record_amount)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def edit_financial_record(connection, record_id, record_type, record_date, record_amount):
-    cursor = connection.cursor()
-    sql = """
-        UPDATE FinancialRecords
-        SET RecordType = %s, RecordDate = %s, RecordAmount = %s
-        WHERE RecordID = %s
-    """
-    values = (record_type, record_date, record_amount, record_id)
-    cursor.execute(sql, values)
-    connection.commit()
-    cursor.close()
-
-
-def remove_financial_record(connection, record_id):
-    cursor = connection.cursor()
-    sql = "DELETE FROM FinancialRecords WHERE RecordID = %s"
-    cursor.execute(sql, (record_id,))
-    connection.commit()
-    cursor.close()
-
-
-def generate_report(connection, report_type, start_date, end_date):
-    cursor = connection.cursor()
-    sql = "SELECT * FROM FinancialRecords WHERE RecordType = %s AND RecordDate BETWEEN %s AND %s"
-    cursor.execute(sql, (report_type, start_date, end_date))
-    records = cursor.fetchall()
-    cursor.close()
-
-    table = PrettyTable()
-    table.field_names = ["Record ID", "Record Type", "Record Date", "Record Amount"]
-
-    for record in records:
-        table.add_row([record[0], record[1], record[2], record[3]])
-
-    total_amount = sum(record[3] for record in records)
-
-    print(f"Report Type: {report_type}")
-    print(f"Start Date: {start_date}")
-    print(f"End Date: {end_date}")
-    print(f"Total Amount: {total_amount}")
-    print(table)
-
-
-def user_account_management(connection):
-    print("User Account Management is not implemented yet.")
-
-
-
-
-def main_menu(connection):
-    while True:
-        print("Hospital Management System")
-        print("1. Display Patient Information")
-        print("2. Add New Patient")
-        print("3. Edit Patient Data")
-        print("4. Remove Patient")
-        print("5. Display Admission and Discharge Records")
-        print("6. View Medical Staff Information")
-        print("7. View Policy and Procedure Details")
-        print("8. Edit Policy and Procedure Details")
-        print("9. Remove Policies and Procedures")
-        print("10. Assign Room to Patient")
-        print("11. View Room Assignments")
-        print("12. Edit Admission Records")
-        print("13. Add Billing Information")
-        print("14. Edit Billing Information")
-        print("15. Remove Billing Information")
-        print("16. Add Medical Images")
-        print("17. Edit Medical Images")
-        print("18. Remove Medical Images")
-        print("19. Add Lab Results")
-        print("20. Edit Lab Results")
-        print("21. Remove Lab Results")
-        print("22. Add Medications")
-        print("23. Edit Medications")
-        print("24. Remove Medications")
-        print("25. Schedule Appointments")
-        print("26. Edit Appointments")
-        print("27. Cancel Appointments")
-        print("28. Assign Staff Roles")
-        print("29. Edit Staff Information")
-        print("30. Remove Staff Members")
-        print("31. Create Hospital Policies")
-        print("32. Remove Policies and Procedures")
-        print("33. Assign Rooms")
-        print("34. View Room Assignments")
-        print("35. Discharge Patients")
-        print("36. View Inventory")
-        print("37. Add Inventory Items")
-        print("38. Edit Inventory Items")
-        print("39. Remove Inventory Items")
-        print("40. View Supplier Information")
-        print("41. Add Suppliers")
-        print("42. Edit Supplier Information")
-        print("43. Remove Suppliers")
-        print("44. Patient Check-in")
-        print("45. View Quality Assurance Assessments")
-        print("46. Add Quality Assurance Assessments")
-        print("47. Edit Quality Assurance Assessments")
-        print("48. Remove Quality Assurance Assessments")
-        print("49. View Research Projects")
-        print("50. Add Research Projects")
-        print("51. Edit Research Projects")
-        print("52. Remove Research Projects")
-        print("53. View Financial Records")
-        print("54. Add Financial Records")
-        print("55. Edit Financial Records")
-        print("56. Remove Financial Records")
-        print("57. Generate Reports")
-        print("58. User Account Management")
-        print("59. Exit")
-        choice = input("Enter your choice: ")
-
-        if choice == "1":
-            display_patient_info(connection)
-        elif choice == "2":
-            
-            pass
-        elif choice == "3":
-            
-            pass
-        elif choice == "4":
-            
-            pass
-        elif choice == "5":
-            display_admissions(connection)
-        elif choice == "6":
-            view_medical_staff_info(connection)
-        elif choice == "7":
-            view_policies(connection)
-        elif choice == "8":
-            
-            pass
-        elif choice == "9":
-            
-            pass
-        elif choice == "10":
-            
-            pass
-        elif choice == "11":
-            view_room_assignments(connection)
-        elif choice == "12":
-            
-            pass
-        elif choice == "13":
-            
-            pass
-        elif choice == "14":
-            
-            pass
-        elif choice == "15":
-            
-            pass
-        elif choice == "16":
-            
-            pass
-        elif choice == "17":
-            
-            pass
-        elif choice == "18":
-            
-            pass
-        elif choice == "19":
-            
-            pass
-        elif choice == "20":
-            
-            pass
-        elif choice == "21":
-            
-            pass
-        elif choice == "22":
-            
-            pass
-        elif choice == "23":
-            
-            pass
-        elif choice == "24":
-            
-            pass
-        elif choice == "25":
-            
-            pass
-        elif choice == "26":
-            
-            pass
-        elif choice == "27":
-            
-            pass
-        elif choice == "28":
-            
-            pass
-        elif choice == "29":
-            
-            pass
-        elif choice == "30":
-            
-            pass
-        elif choice == "31":
-            
-            pass
-        elif choice == "32":
-            
-            pass
-        elif choice == "33":
-            
-            pass
-        elif choice == "34":
-            
-            pass
-        elif choice == "35":
-            
-            pass
-        elif choice == "36":
-            
-            pass
-        elif choice == "37":
-            
-            pass
-        elif choice == "38":
-            
-            pass
-        elif choice == "39":
-            
-            pass
-        elif choice == "40":
-            
-            pass
-        elif choice == "41":
-            
-            pass
-        elif choice == "42":
-            
-            pass
-        elif choice == "43":
-            
-            pass
-        elif choice == "44":
-            
-            pass
-        elif choice == "45":
-            
-            pass
-        elif choice == "46":
-            
-            pass
-        elif choice == "47":
-            
-            pass
-        elif choice == "48":
-            
-            pass
-        elif choice == "49":
-            
-            pass
-        elif choice == "50":
-            
-            pass
-        elif choice == "51":
-            
-            pass
-        elif choice == "52":
-            
-            pass
-        elif choice == "53":
-            
-            pass
-        elif choice == "54":
-            
-            pass
-        elif choice == "55":
-            
-            pass
-        elif choice == "56":
-            
-            pass
-        elif choice == "57":
-            
-            pass
-        elif choice == "58":
-            
-            pass
-        elif choice == "59":
-            print("Exiting the Hospital Management System. Goodbye!")
-            break
+    tkinter.messagebox.showinfo("DONE", "YOU HAVE BEEN REGISTERED")
+
+#  For registration 
+def register():
+    global e1,e2,e3,e4,e5,e6
+    root1=Tk()
+    label=Label(root1,text="REGISTER YOURSELF",font='arial 25 bold')
+    label.pack()
+    frame=Frame(root1,height=500,width=200)
+    frame.pack()
+    l1=Label(root1,text="AADHAR CARD NO.")
+    l1.place(x=10,y=130)
+    e1=tkinter.Entry(root1)
+    e1.place(x=100,y=130)
+    l2=Label(root1,text="NAME")
+    l2.place(x=10,y=170)
+    e2=tkinter.Entry(root1)
+    e2.place(x=100,y=170)
+    l3=Label(root1,text="AGE")
+    l3.place(x=10,y=210)
+    e3=tkinter.Entry(root1)
+    e3.place(x=100,y=210)
+    l4=Label(root1,text="GENDER M\F")
+    l4.place(x=10,y=250)
+    e4=tkinter.Entry(root1)
+    e4.place(x=100,y=250)
+    l5=Label(root1,text="PHONE")
+    l5.place(x=10,y=290)
+    e5=tkinter.Entry(root1)
+    e5.place(x=100,y=290)
+    l6=Label(root1,text="BLOOD GROUP")
+    l6.place(x=10,y=330)
+    e6=tkinter.Entry(root1)
+    e6.place(x=100,y=330)
+    b1=Button(root1,text="SUBMIT",command=entry)
+    b1.place(x=150,y=370)
+    
+    
+    root.resizable(False,False)
+    root1.mainloop()
+
+#  Message for appointment
+def apo_details():
+    global x1,x2,h,p1,p2,p3,o,x4,x3
+    p1=x2.get()
+    p2=x3.get()
+    p3=x4.get()
+    if int(p1)==1:
+        i=("Dr. sharma \nRoom no:- 10")
+        j=("Dr. Verma \nRoom no:- 11")
+        q=(i,j)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query)
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)
+     
+    elif int(p1)==2:
+        i=("Dr. Sidharth \nRoom no. 16")
+        j=("Dr. Tendulkar \nRoom no. 17")
+        q=(i,j)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)        
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query) 
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)
+     
+    elif int(p1)==3:
+        i=("Dr. Kumar \nRoom no. 12")
+        j=("Dr. Khan \nRoom no. 13")
+        q=(i,j)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)        
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query) 
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)
+
+    elif int(p1)==4:
+        i=("Dr. Virat, \nRoom no. 18")
+        j=("Dr. Leo \nRoom no. 19")
+        q=(i,j)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)        
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query)
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)
+    elif int(p1)==5:
+        i=("Dr. Kohli \nRoom no. 14")
+        j=("Dr. singh \nRoom no. 15")
+        q=(i,j)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)        
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query)
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)   
+    elif int(p1)==6:
+        i=("Dr. Irfan \nRoom no. 001")
+        j=("Dr. John \nRoom no. 002")
+        k=("Dr. Sanjay \nRoom no. 003")
+        l=("Dr. Shahid \nRoom no. 004")
+        q=(i,j,k,l)
+        h=rd.choice(q) 
+        u=(23,34,12,67,53,72)
+        o=rd.choice(u)        
+        det=("Your appointment is fixed with",h,
+             "\nDate:-",p2,
+             "\nTime:-",p3,
+             '\nappointment no:-',o)
+        query='insert into appointment_details values("{}", "{}", "{}", "{}", "{}")'.format(p1,h,p2,p3,o)
+        cur.execute(query)
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)   
+    else:
+        tkinter.messagebox.showwarning('WRONG INPUT','PLEASE ENTER VALID VALUE')
+
+#  For appointment
+def get_apoint():
+    global x1,x2,x3,x4
+    p1=x1.get()  
+    cur.execute('select * from appointment where idno=(%s)',(p1,))
+    dat=cur.fetchall()
+    a=[]
+    for i in dat:
+        a.append(i)   
+    if len(a)==0:
+        tkinter.messagebox.showwarning("ERROR", "NO DATA FOUND!!")
+    else:
+        root3=Tk()
+        label=Label(root3,text="APPOINTMENT",font='arial 25 bold')
+        label.pack()
+        frame=Frame(root3,height=500,width=300)
+        frame.pack()
+        if i[3]=='M' or i[3]=='m':
+                x="Mr."
+                name2=Label(root3,text=i[1])
+                name2.place(x=140,y=80)
         else:
-            print("Invalid choice. Please enter a valid option.")
-if __name__ == "__main__":
-    db_connection = check_and_create_database_tables()
-    if db_connection:
-        main_menu(db_connection)
-        db_connection.close()
+                x="Mrs\Ms."
+                name2=Label(root3,text=i[1])
+                name2.place(x=170,y=80)
+        for i in dat:
+            name=Label(root3,text='WELCOME')
+            name.place(x=50,y=80)
+            name1=Label(root3,text=x)
+            name1.place(x=120,y=80)
+            age=Label(root3,text='AGE:-')
+            age.place(x=50,y=100)
+            age1=Label(root3,text=i[2])
+            age1.place(x=100,y=100)
+            phone=Label(root3,text='PHONE:-')
+            phone.place(x=50,y=120)
+            phone1=Label(root3,text=i[4])
+            phone1.place(x=100,y=120)
+            bg=Label(root3,text='BLOOD GROUP:-')
+            bg.place(x=50,y=140)
+            bg1=Label(root3,text=i[5])
+            bg1.place(x=150,y=140)
+
+
+        L=Label(root3,text='DEPARTMENTS')
+        L.place(x=50,y=220)
+        L1=Label(root3,text="1.Orthopaedic surgeon ")
+        L1.place(x=50,y=250)
+        L2=Label(root3,text='2.Physician')
+        L2.place(x=50,y=270)
+        L3=Label(root3,text='3.Nephrologist')
+        L3.place(x=50,y=290)
+        L4=Label(root3,text='4.Neurologist')
+        L4.place(x=50,y=310)
+        L5=Label(root3,text='5.Gynaecologist')
+        L5.place(x=50,y=330)
+        L6=Label(root3,text='6.X-ray')
+        L6.place(x=50,y=350)
+        L7=Label(root3,text='Enter your choice')
+        L7.place(x=100,y=370)
+        x2=tkinter.Entry(root3)
+        x2.place(x=200,y=370)
+        
+        L7=Label(root3,text=('enter date')).place(x=100,y=400)
+        x3=tkinter.Entry(root3)
+        x3.place(x=200,y=400)
+
+        L8=Label(root3,text=('enter time in 24 hour format')).place(x=48,y=430)
+        x4=tkinter.Entry(root3)
+        x4.place(x=200,y=430)
+        
+        B1=Button(root3,text='Submit',command=apo_details)
+        B1.place(x=120,y=480)   
+        root3.resizable(False,False)
+        root3.mainloop()
+
+
+
+#  For AADHAAR no input
+def apoint():
+    global x1
+    root2=Tk()
+    label=Label(root2,text="APPOINTMENT",font='arial 25 bold')
+    label.pack()
+    frame=Frame(root2,height=200,width=200)
+    frame.pack()
+    l1=Label(root2,text="AADHAAR NO.")
+    l1.place(x=10,y=130)
+    x1=tkinter.Entry(root2)
+    x1.place(x=100,y=130)
+    b1=Button(root2,text='Submit',command=get_apoint)
+    b1.place(x=100,y=160)
+    root2.resizable(False,False)
+    root2.mainloop()
+    
+#  List of doctors
+def lst_doc():
+    root4=Tk()
+    
+    l=["Dr. sharma","Dr. Verma","Dr. Kumar","Dr. Khan","Dr. Kohli","Dr. singh","Dr. Sidharth","Dr. tendulkar","Dr. Virat","Dr. Leo",'Dr. Irfan','Dr. John',
+       'Dr. Sanjay','Dr. Shahid']
+    m=["Orthopaedic surgeon","Orthopaedic surgeon","Nephrologist","Nephrologist","Gynaecologist","Gynaecologist","Physician","Physician","Neurologist",
+       "Neurologist",'X-ray','X-ray','X-ray','X-ray']
+    n=[10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+
+    frame=Frame(root4,height=500,width=500)
+    frame.pack()
+    
+    
+    l1=Label(root4,text='NAME OF DOCTORS') 
+    l1.place(x=20,y=10)
+    count=20
+    for i in l:
+       count=count+20
+       l=Label(root4,text=i)
+       l.place(x=20,y=count)
+
+    l2=Label(root4,text='DEPARTMENT')
+    l2.place(x=140,y=10)
+    count1=20
+    for i in m:
+       count1=count1+20
+       l3=Label(root4,text=i)
+       l3.place(x=140,y=count1)
+
+    l4=Label(root4,text='ROOM NO')
+    l4.place(x=260,y=10)
+    count2=20
+    for i in n:
+       count2=count2+20
+       l5=Label(root4,text=i)
+       l5.place(x=260,y=count2)
+    root.resizable(False,False)
+    root4.mainloop()
+
+def ser_avail():
+    
+    root5=Tk()
+    frame=Frame(root5,height=500,width=500)
+    frame.pack()
+    l1=Label(root5,text='SERVICES AVAILABLE')
+    l1.place(x=20,y=10)
+    f=["ULTRASOUND","X-RAY","CT Scan","MRI","BLOOD COLLECTION","DIALYSIS","ECG","CHEMIST","LAB"]
+    count1=20
+    for i in f:
+       count1=count1+20
+       l3=Label(root5,text=i)
+       l3.place(x=20,y=count1)
+    l2=Label(root5,text='ROOM NO.')
+    l2.place(x=140,y=10)
+    g=[1,2,3,4,5,6,7,8,9]
+    count2=20
+    for i in g:
+       count2=count2+20
+       l4=Label(root5,text=i)
+       l4.place(x=140,y=count2)
+    l5=Label(root5,text='To avail any of these please contact on our no.:- 7042****55')
+    l5.place(x=20,y=240)
+    root5.resizable(False,False)
+    root5.mainloop()
+
+def modify():
+    global x3,x4,choice,new,x5,root6
+    p1=x3.get()
+    cur.execute('select * from appointment where idno=(%s)',(p1,))
+    
+    dat=cur.fetchall()
+    a=[]
+    for i in dat:
+        a.append(i)   
+    if len(a)==0:
+        tkinter.messagebox.showwarning("ERROR", "NO DATA FOUND!!")
+    else: 
+      root6=Tk()
+      frame=Frame(root6,height=500,width=500)
+      frame.pack()
+      l1=Label(root6,text='DATA MODIFICATION',font="arial 15 bold")
+      l1.place(x=75,y=10)
+      l2=Label(root6,text='WHAT YOU WANT TO CHANGE')
+      l2.place(x=50,y=200)
+      l3=Label(root6,text='1.NAME')
+      l3.place(x=50,y=220)
+      l4=Label(root6,text='2.AGE')
+      l4.place(x=50,y=240)
+      l5=Label(root6,text='3.GENDER')
+      l5.place(x=50,y=260)
+      l6=Label(root6,text='4.PHONE')
+      l6.place(x=50,y=280)
+      l7=Label(root6,text='5.BLOOD GROUP')
+      l7.place(x=50,y=300)
+      x2=Label(root6,text='Enter')
+      x2.place(x=50,y=330)
+      x4=tkinter.Entry(root6)
+      choice=x4.get()
+      x4.place(x=100,y=330)
+      for i in dat:
+            name=Label(root6,text='NAME:-')
+            name.place(x=50,y=80)
+            name1=Label(root6,text=i[1])
+            name1.place(x=150,y=80)
+            age=Label(root6,text='AGE:-')
+            age.place(x=50,y=100)
+            age1=Label(root6,text=i[2])
+            age1.place(x=150,y=100)
+            gen=Label(root6,text='GENDER:-')
+            gen.place(x=50,y=120)
+            gen1=Label(root6,text=i[3])
+            gen1.place(x=150,y=120)
+            pho=Label(root6,text='PHONE:-')
+            pho.place(x=50,y=140)
+            pho1=Label(root6,text=i[4])
+            pho1.place(x=150,y=140)
+            bg=Label(root6,text='BLOOD GROUP:-')
+            bg.place(x=50,y=160)
+            bg1=Label(root6,text=i[5])
+            bg1.place(x=150,y=160)
+      b=Button(root6,text='Submit',command=do_modify)
+      b.place(x=50,y=400)
+      L1=Label(root6,text='OLD DETAILS')
+      L1.place(x=50,y=50)
+      L2=Label(root6,text='ENTER NEW DETAIL')
+      L2.place(x=50,y=360)
+      x5=tkinter.Entry(root6)
+      new=x5.get()
+      x5.place(x=160,y=360)
+
+      root6.resizable(False,False)
+      root6.mainloop()
+
+def do_modify():
+    global ad,x3,x4,x5
+    ad=x3.get()
+    choice=x4.get()
+    new=x5.get()
+    if choice=='1':
+        cur.execute('update appointment set name={} where idno={}'.format(new,ad))
+    elif choice=='2':
+        cur.execute('update appointment set age={} where idno={}'.format(new,ad))        
+    elif choice=='3':
+        cur.execute('update appointment set gender={} where idno={}'.format(new,ad))
+    elif choice=='4':
+        cur.execute('update appointment set phone={} where idno={}'.format(new,ad))    
+    elif choice=='5':
+        cur.execute('update appointment set bg={} where idno={}'.format(new,ad))
+    else:
+        pass
+    root6.destroy()
+    tkinter.messagebox.showinfo("DONE", "YOUR DATA HAS BEEN MODIFIED")
+    
+choice=None
+new=None    
+ad=None
+def mod_sub():
+    global x3,ad
+    root7=Tk()
+    label=Label(root7,text="MODIFICATION",font='arial 25 bold')
+    label.pack()
+    frame=Frame(root7,height=200,width=200)
+    frame.pack()
+    l1=Label(root7,text="AADHAAR NO.")
+    l1.place(x=10,y=130)
+    x3=tkinter.Entry(root7)
+    x3.place(x=100,y=130)
+    ad=x3.get()
+    b1=Button(root7,text='Submit',command=modify)
+    b1.place(x=100,y=160)
+    root7.resizable(False,False)
+    root7.mainloop()     
+
+def search_data():
+    global x3,ad
+    root7=Tk()
+    label=Label(root7,text="SEARCH DATA",font='arial 25 bold')
+    label.pack()
+    frame=Frame(root7,height=200,width=200)
+    frame.pack()
+    l1=Label(root7,text="AADHAAR NO.")
+    l1.place(x=10,y=130)
+    x3=tkinter.Entry(root7)
+    x3.place(x=100,y=130)
+    ad=x3.get()
+    b1=Button(root7,text='Submit',command=view_data)
+    b1.place(x=100,y=160)
+    root7.resizable(False,False)
+    root7.mainloop()
+
+def view_data():
+    global p1
+    p1=x3.get()
+    cur.execute('select * from appointment where idno=(%s)',(p1,))
+    
+    dat=cur.fetchall()
+    print(dat)
+    a=[]
+    for i in dat:
+        a.append(i)   
+    if len(a)==0:
+        tkinter.messagebox.showwarning("ERROR", "NO DATA FOUND!!")
+    else:
+        det=a
+        tkinter.messagebox.showinfo("APPOINTMENT DETAILS",det)
+        
+   
+root=Tk()
+label=Label(root,text="INDIAN HOSPITAL",font="arial 40 bold",bg='light blue')
+b1=Button(text="Registration",font="arial 20 bold",bg='yellow',command=register)
+b2=Button(text="Appointment",font="arial 20 bold",bg='yellow',command=apoint)
+b3=Button(text="List of Doctors",font="arial 20 bold",bg='yellow',command=lst_doc)
+b4=Button(text="Services available",font='arial 20 bold',bg='yellow',command=ser_avail)
+b7=Button(text="View data",font='arial 20 bold',bg='yellow',command=search_data)
+b5=Button(text="Modify existing data",font='arial 20 bold',bg='yellow',command=mod_sub)
+b6=Button(text="Exit",font='arial 20 bold',command=root.destroy,bg='violet')
+label.pack()
+b1.pack(side=LEFT,padx=10)
+b3.pack(side=LEFT,padx=10)
+b4.pack(side=LEFT,padx=10)
+b2.place(x=25,y=500)
+b7.pack(side=LEFT,padx=10)
+b5.place(x=350,y=500)
+b6.place(x=800,y=500)
+frame=Frame(root,height=600,width=50)
+frame.pack()
+root.resizable(False,False)
+root.mainloop()
