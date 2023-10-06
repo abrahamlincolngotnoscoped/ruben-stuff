@@ -2,8 +2,8 @@ import tkinter.messagebox
 from tkinter import  *
 import mysql.connector as sqlcon
 import random as rd
-
-con=sqlcon.connect(host="localhost",user="root",password="admin")#connection to mysql 
+passw=input("Enter your mysql password:")
+con=sqlcon.connect(host="localhost",user="root",password=passw)#connection to mysql 
 cur=con.cursor()
 cur = con.cursor(buffered=True)
 if (con):
@@ -489,14 +489,14 @@ def view_data():
         
    
 root=Tk()
-label=Label(root,text="INDIAN HOSPITAL",font="arial 40 bold",bg='light blue')
+label=Label(root,text="RUBEN MEMORIAL HOSPITAL",font="arial 40 bold",bg='light blue')
 b1=Button(text="Registration",font="arial 20 bold",bg='yellow',command=register)
 b2=Button(text="Appointment",font="arial 20 bold",bg='yellow',command=apoint)
 b3=Button(text="List of Doctors",font="arial 20 bold",bg='yellow',command=lst_doc)
 b4=Button(text="Services available",font='arial 20 bold',bg='yellow',command=ser_avail)
 b7=Button(text="View data",font='arial 20 bold',bg='yellow',command=search_data)
 b5=Button(text="Modify existing data",font='arial 20 bold',bg='yellow',command=mod_sub)
-b6=Button(text="Exit",font='arial 20 bold',command=root.destroy,bg='violet')
+b6=Button(text="Exit",font='arial 20 bold',command=root.destroy,bg='red')
 label.pack()
 b1.pack(side=LEFT,padx=10)
 b3.pack(side=LEFT,padx=10)
